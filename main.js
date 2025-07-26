@@ -3,6 +3,7 @@
 // --- 準備 --------------------------------------------------------------------
 const canvas = document.getElementById('whiteboard');
 const context = canvas.getContext('2d');
+const clientId = Date.now().toString(36) + Math.random().toString(36).substring(2);
 
 // 線の基本設定
 context.lineJoin = 'round';
