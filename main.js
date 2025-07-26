@@ -1,7 +1,7 @@
 //基本設定
 const canvas = document.getElementById('whiteboard');
 const context = canvas.getContext('2d');
-const clientId = Date.now().toString(36) + Math.random().toString(36).substring(2);
+
 
 //線の基本設定
 context.lineJoin = 'round';
@@ -16,8 +16,19 @@ let currentStroke = {
     lineWidth: 3,
     points: []
 };
+//セッションID
 let currentSessionId = null;
 
+//セッションストレージからクライアントIDを取得、なければ新規作成
+function getClientId() {
+    let id = sessionStorage.getItem('clientId');
+    if (!id) {
+        id = Date.now().toString(36) + Math.random().toString(36).substring(2);
+        sessionStorage.setItem('clientId', id);
+    }
+    return id;
+}
+const clientId = getClientId();
 
 //描画ロジック
 function drawOnCanvas(stroke) {
@@ -62,9 +73,7 @@ async function loadAndDraw() {
     }
 }
 
-
 //イベントリスナー
-
 //ツール選択の処理
 const colorButtons = document.querySelectorAll('.color-btn');
 const widthButtons = document.querySelectorAll('.width-btn');
@@ -78,10 +87,6 @@ colorButtons.forEach(button => {
         button.classList.add('selected');
         //ペンの色を更新
         currentStroke.color = button.dataset.color;
-        //消しゴム（白）を選んだら線の太さを太くする
-        if (button.dataset.color === 'white') {
-            currentStroke.lineWidth = 30;
-        }
     });
 });
 
@@ -143,12 +148,12 @@ canvas.addEventListener('mouseleave', () => {
 //リセットボタンが押された時
 const resetButton = document.getElementById('reset-button');
 resetButton.addEventListener('click', async () => {
-    //確認ダイアログを表示
     if (confirm('本当にキャンバスをリセットしますか？他の人の描画もすべて消えます。')) {
         try {
+            //サーバーにリセットを要求するだけ
             await fetch('/api/reset', { method: 'POST' });
-            //サーバー側でリセットされた後、自分の画面もリロードして綺麗にする
-            location.reload();
+            //location.reload() は削除。
+            //画面のクリアは、次のポーリングで検知して行われる。
         } catch (error) {
             console.error('リセットに失敗しました:', error);
         }
@@ -156,7 +161,6 @@ resetButton.addEventListener('click', async () => {
 });
 
 //リアルタイム更新
-
 //最後にチェックしたサーバー時刻を保持する変数
 let lastCheckTime = 0;
 
@@ -204,4 +208,5 @@ async function initialize() {
     }
 }
 
+//初期化
 initialize(); 

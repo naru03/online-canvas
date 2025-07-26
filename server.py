@@ -10,7 +10,6 @@ SESSION_ID = str(uuid.uuid4())
 ACTIVE_USERS = {} #キー: clientId, 値: 最終アクセス時刻
 
 #APIエンドポイントの定義
-
 @app.route('/api/drawings', methods=['GET'])
 def get_drawings():
     global SESSION_ID, ACTIVE_USERS
@@ -61,9 +60,7 @@ def add_drawing():
 
     return jsonify({"status": "success", "data": new_data})
 
-
 #フロントエンドのファイルを提供するルーティング
-
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
@@ -82,7 +79,6 @@ def reset_drawings():
 @app.route('/<path:path>')
 def send_file(path):
     return send_from_directory('.', path)
-
 
 #サーバーの起動
 if __name__ == '__main__':
