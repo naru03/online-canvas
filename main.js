@@ -182,20 +182,26 @@ let lastCheckTime = 0;
  */
 // main.js の pollForNewDrawings を置き換え
 
+// pollForNewDrawings 関数を丸ごと置き換え
+
 async function pollForNewDrawings() {
     try {
-        const response = await fetch(`/api/drawings?since=${lastCheckTime}`);
-        const data = await response.json(); // {session_id, strokes} を受け取る
+        const userCountSpan = document.getElementById('user-count'); // 人数表示の要素を取得
 
-        // サーバーのセッションIDが自分のものと違う場合、リセットされたと判断
-        if (currentSessionId && data.session_id !== currentSessionId) {
-            console.log("リセットを検知しました。キャンバスをクリアします。");
-            context.clearRect(0, 0, canvas.width, canvas.height); // キャンバスをクリア
-            currentSessionId = data.session_id; // 新しいセッションIDに更新
-            // 必要であれば、リセット後に残っているストロークを再描画（今回はなし）
+        const response = await fetch(`/api/drawings?since=${lastCheckTime}&clientId=${clientId}`);
+        const data = await response.json();
+
+        // 人数を画面に反映
+        if (data.user_count) {
+            userCountSpan.textContent = data.user_count;
         }
 
-        currentSessionId = data.session_id; // セッションIDを更新
+        if (currentSessionId && data.session_id !== currentSessionId) {
+            console.log("リセットを検知しました。キャンバスをクリアします。");
+            context.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        currentSessionId = data.session_id;
 
         if (data.strokes.length > 0) {
             data.strokes.forEach(drawOnCanvas);
@@ -210,7 +216,8 @@ async function pollForNewDrawings() {
 
 async function initialize() {
     try {
-        const response = await fetch('/api/drawings'); // sinceなしで初回ロード
+        // initialize 関数の fetch の行を修正
+        const response = await fetch(`/api/drawings?clientId=${clientId}`); // sinceなしの初回ロード
         const data = await response.json();
 
         currentSessionId = data.session_id; // 最初のセッションIDを設定

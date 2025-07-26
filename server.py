@@ -9,31 +9,45 @@ from flask import Flask, request, jsonify, send_from_directory
 app = Flask(__name__)
 DB_FILE = "drawings.json"
 SESSION_ID = str(uuid.uuid4())
+ACTIVE_USERS = {} # ←これを追加（キー: clientId, 値: 最終アクセス時刻
 
 # --- APIエンドポイントの定義 ---
 
 # server.py の get_drawings を置き換え
 
+# server.py の get_drawings を置き換え
+
 @app.route('/api/drawings', methods=['GET'])
 def get_drawings():
-    global SESSION_ID
-    since_timestamp = request.args.get('since', 0, type=int)
+    global SESSION_ID, ACTIVE_USERS
+    
+    # --- アクティブユーザーの記録と集計 ---
+    client_id = request.args.get('clientId')
+    if client_id:
+        ACTIVE_USERS[client_id] = time.time()
 
+    # タイムアウト（10秒以上応答がないユーザーは除外）
+    timeout_threshold = time.time() - 10
+    ACTIVE_USERS = {uid: t for uid, t in ACTIVE_USERS.items() if t > timeout_threshold}
+    user_count = len(ACTIVE_USERS)
+
+    # --- 描画データの処理（ここは以前と同じ） ---
+    since_timestamp = request.args.get('since', 0, type=int)
     all_data = []
     if os.path.exists(DB_FILE) and os.path.getsize(DB_FILE) > 0:
         with open(DB_FILE, 'r') as f:
             all_data = json.load(f)
 
-    # 返すデータを準備
     if since_timestamp == 0:
         response_data = all_data
     else:
         response_data = [d for d in all_data if d.get('timestamp', 0) > since_timestamp]
     
-    # セッションIDと一緒にデータを返す
+    # --- 最終的なレスポンス（user_count を追加） ---
     return jsonify({
         "session_id": SESSION_ID,
-        "strokes": response_data
+        "strokes": response_data,
+        "user_count": user_count # ←人数を追加
     })
 
 @app.route('/api/draw', methods=['POST'])
