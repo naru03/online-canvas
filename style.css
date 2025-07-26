@@ -13,17 +13,13 @@ h1 {
 
 #whiteboard-container {
     border: 1px solid #ccc;
-    /* コンテナに枠線を追加 */
     margin-bottom: 20px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    /* 少し影をつける */
 }
 
 #whiteboard {
     background-color: #fff;
-    /* キャンバスの背景色を白に */
     border: 1px solid #bbb;
-    /* キャンバス自体の枠線 */
 }
 
 .controls {
@@ -43,12 +39,10 @@ h1 {
     background-color: #ddd;
 }
 
-/* style.css の末尾に追加 */
-
 .controls {
     display: flex;
     gap: 30px;
-    /* ツールグループ間の隙間 */
+    /*ツールグループ間の隙間*/
     align-items: center;
     padding: 10px;
     background-color: #fff;
@@ -63,12 +57,11 @@ h1 {
     align-items: center;
 }
 
-/* カラーボタンのスタイル */
+/*カラーボタン*/
 .color-btn {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    /* 円形にする */
     border: 2px solid #f0f0f0;
     cursor: pointer;
     transition: all 0.2s;
@@ -81,7 +74,7 @@ h1 {
 
 .color-btn.selected {
     border-color: #007bff;
-    /* 選択されている色を青い枠で囲む */
+    /*選択されている色を青い枠で囲む*/
     box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
@@ -91,15 +84,14 @@ h1 {
     color: #333;
 }
 
-/* 太さボタンのスタイル */
+/*太さボタン*/
 .width-btn {
     padding: 5px 15px;
     border: 2px solid transparent;
-    /* 普段は枠線なし */
 }
 
 .width-btn.selected {
     border-color: #007bff;
-    /* 選択されている太さを青い枠で囲む */
+    /*選択されている太さを青い枠で囲む*/
     background-color: #e7f3ff;
 }
