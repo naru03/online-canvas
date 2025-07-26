@@ -16,6 +16,7 @@ let currentStroke = {
     lineWidth: 3,
     points: []
 };
+let currentSessionId = null;
 
 
 // --- 描画ロジック --------------------------------------------------------------
@@ -120,7 +121,72 @@ canvas.addEventListener('mouseleave', () => {
     currentStroke.points = [];
 });
 
+// リセットボタンが押された時
+const resetButton = document.getElementById('reset-button');
+resetButton.addEventListener('click', async () => {
+    // 確認ダイアログを表示
+    if (confirm('本当にキャンバスをリセットしますか？他の人の描画もすべて消えます。')) {
+        try {
+            await fetch('/api/reset', { method: 'POST' });
+            // サーバー側でリセットされた後、自分の画面もリロードして綺麗にする
+            location.reload();
+        } catch (error) {
+            console.error('リセットに失敗しました:', error);
+        }
+    }
+});
 
-// --- 初期化処理 -------------------------------------------------------------
-// ページが読み込まれたら、既存の絵をロードする
-loadAndDraw();
+// main.js の一番下に追加
+
+// --- リアルタイム更新（ポーリング） ---------------------------------------------
+
+// 最後にチェックしたサーバー時刻を保持する変数
+let lastCheckTime = 0;
+
+/**
+ * サーバーに新しい描画データがないか問い合わせる関数
+ */
+// main.js の pollForNewDrawings を置き換え
+
+async function pollForNewDrawings() {
+    try {
+        const response = await fetch(`/api/drawings?since=${lastCheckTime}`);
+        const data = await response.json(); // {session_id, strokes} を受け取る
+
+        // サーバーのセッションIDが自分のものと違う場合、リセットされたと判断
+        if (currentSessionId && data.session_id !== currentSessionId) {
+            console.log("リセットを検知しました。キャンバスをクリアします。");
+            context.clearRect(0, 0, canvas.width, canvas.height); // キャンバスをクリア
+            currentSessionId = data.session_id; // 新しいセッションIDに更新
+            // 必要であれば、リセット後に残っているストロークを再描画（今回はなし）
+        }
+
+        currentSessionId = data.session_id; // セッションIDを更新
+
+        if (data.strokes.length > 0) {
+            data.strokes.forEach(drawOnCanvas);
+            lastCheckTime = data.strokes[data.strokes.length - 1].timestamp;
+        }
+    } catch (error) {
+        console.error('ポーリングエラー:', error);
+    }
+}
+
+// main.js の initialize を置き換え
+
+async function initialize() {
+    try {
+        const response = await fetch('/api/drawings'); // sinceなしで初回ロード
+        const data = await response.json();
+
+        currentSessionId = data.session_id; // 最初のセッションIDを設定
+        data.strokes.forEach(drawOnCanvas); // 既存の絵をロード
+
+        lastCheckTime = Date.now();
+        setInterval(pollForNewDrawings, 1000);
+    } catch (error) {
+        console.error('読み込みに失敗しました:', error);
+    }
+}
+
+initialize(); 

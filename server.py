@@ -3,22 +3,38 @@
 import json
 import os
 import time
+import uuid
 from flask import Flask, request, jsonify, send_from_directory
 
 app = Flask(__name__)
 DB_FILE = "drawings.json"
+SESSION_ID = str(uuid.uuid4())
 
 # --- APIエンドポイントの定義 ---
 
+# server.py の get_drawings を置き換え
+
 @app.route('/api/drawings', methods=['GET'])
 def get_drawings():
-    # ファイルが存在し、かつ中身が空でないかチェック
-    if not os.path.exists(DB_FILE) or os.path.getsize(DB_FILE) == 0:
-        return jsonify([]) # 存在しないか空の場合は、空のリストを返す
+    global SESSION_ID
+    since_timestamp = request.args.get('since', 0, type=int)
 
-    with open(DB_FILE, 'r') as f:
-        data = json.load(f)
-    return jsonify(data)
+    all_data = []
+    if os.path.exists(DB_FILE) and os.path.getsize(DB_FILE) > 0:
+        with open(DB_FILE, 'r') as f:
+            all_data = json.load(f)
+
+    # 返すデータを準備
+    if since_timestamp == 0:
+        response_data = all_data
+    else:
+        response_data = [d for d in all_data if d.get('timestamp', 0) > since_timestamp]
+    
+    # セッションIDと一緒にデータを返す
+    return jsonify({
+        "session_id": SESSION_ID,
+        "strokes": response_data
+    })
 
 @app.route('/api/draw', methods=['POST'])
 def add_drawing():
@@ -43,6 +59,17 @@ def add_drawing():
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
+
+# POST /api/reset : 全ての描画データをリセットする
+@app.route('/api/reset', methods=['POST'])
+def reset_drawings():
+    global SESSION_ID
+    # ファイルを空のリストで上書きしてリセット
+    with open(DB_FILE, 'w') as f:
+        json.dump([], f)
+    # 新しいセッションIDを生成して、リセットを識別
+    SESSION_ID = str(uuid.uuid4())
+    return jsonify({"status": "success", "message": "Canvas has been reset."})
 
 @app.route('/<path:path>')
 def send_file(path):
