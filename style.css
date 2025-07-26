@@ -1,0 +1,105 @@
+body {
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: #f4f4f4;
+}
+
+h1 {
+    margin-bottom: 20px;
+}
+
+#whiteboard-container {
+    border: 1px solid #ccc;
+    /* コンテナに枠線を追加 */
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* 少し影をつける */
+}
+
+#whiteboard {
+    background-color: #fff;
+    /* キャンバスの背景色を白に */
+    border: 1px solid #bbb;
+    /* キャンバス自体の枠線 */
+}
+
+.controls {
+    margin-bottom: 10px;
+}
+
+.controls button {
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #eee;
+    cursor: pointer;
+    font-size: 1em;
+}
+
+.controls button:hover {
+    background-color: #ddd;
+}
+
+/* style.css の末尾に追加 */
+
+.controls {
+    display: flex;
+    gap: 30px;
+    /* ツールグループ間の隙間 */
+    align-items: center;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.tool-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* カラーボタンのスタイル */
+.color-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    /* 円形にする */
+    border: 2px solid #f0f0f0;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.color-btn:hover {
+    transform: scale(1.1);
+}
+
+.color-btn.selected {
+    border-color: #007bff;
+    /* 選択されている色を青い枠で囲む */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.color-btn.eraser {
+    font-weight: bold;
+    font-size: 14px;
+    color: #333;
+}
+
+/* 太さボタンのスタイル */
+.width-btn {
+    padding: 5px 15px;
+    border: 2px solid transparent;
+    /* 普段は枠線なし */
+}
+
+.width-btn.selected {
+    border-color: #007bff;
+    /* 選択されている太さを青い枠で囲む */
+    background-color: #e7f3ff;
+}

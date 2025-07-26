@@ -77,6 +77,40 @@ async function loadAndDraw() {
 
 
 // --- イベントリスナー -------------------------------------------------------------
+// main.js のイベントリスナーセクションの先頭に追加
+
+// --- ツール選択の処理 ---
+
+const colorButtons = document.querySelectorAll('.color-btn');
+const widthButtons = document.querySelectorAll('.width-btn');
+
+// カラーボタンの処理
+colorButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        // 他のボタンの .selected を削除
+        colorButtons.forEach(btn => btn.classList.remove('selected'));
+        // クリックされたボタンに .selected を追加
+        button.classList.add('selected');
+        // ペンの色を更新
+        currentStroke.color = button.dataset.color;
+        // 消しゴム（白）を選んだら線の太さを太くする
+        if (button.dataset.color === 'white') {
+            currentStroke.lineWidth = 30;
+        }
+    });
+});
+
+// 太さボタンの処理
+widthButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        // 他のボタンの .selected を削除
+        widthButtons.forEach(btn => btn.classList.remove('selected'));
+        // クリックされたボタンに .selected を追加
+        button.classList.add('selected');
+        // ペンの太さを更新 (文字列なので数値に変換)
+        currentStroke.lineWidth = parseInt(button.dataset.width, 10);
+    });
+});
 
 // マウスのボタンが押された時
 canvas.addEventListener('mousedown', (e) => {
