@@ -2,14 +2,14 @@
 
 // HTMLからcanvas要素を取得
 const canvas = document.getElementById('whiteboard');
-// 2D描画コンテキストを取得（これがお絵かきするための道具セット）
+// 2D描画コンテキストを取得
 const context = canvas.getContext('2d');
 
 // 線の色や太さを設定
-context.strokeStyle = 'black'; // 線の色
-context.lineWidth = 3;       // 線の太さ
-context.lineJoin = 'round';  // 線のつなぎ目を滑らかにする
-context.lineCap = 'round';   // 線の先端を丸くする
+context.strokeStyle = 'black'; 
+context.lineWidth = 3;       
+context.lineJoin = 'round';  
+context.lineCap = 'round';   
 
 // 描画中かどうかを判定するフラグ
 let isDrawing = false;
@@ -19,7 +19,7 @@ let lastY = 0;
 
 // 描画処理の関数
 function draw(e) {
-    // isDrawingがfalseなら（マウスが押されていなければ）何もしない
+    // isDrawingがfalseなら何もしない
     if (!isDrawing) return;
 
     // 現在のマウスの座標を取得
