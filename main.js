@@ -1,5 +1,3 @@
-// main.js
-
 // HTMLからcanvas要素を取得
 const canvas = document.getElementById('whiteboard');
 // 2D描画コンテキストを取得
