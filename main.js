@@ -16,19 +16,16 @@ let currentStroke = {
     points: []
 };
 
-//ストローク数の追跡（リセット検知用）
-let lastStrokeCount = 0;
-
-//sessionStorageからClientIdを取得、なければ新規作成
-function getClientId() {
-    let id = sessionStorage.getItem('clientId');
+//sessionStorageからSessionIdを取得、なければ新規作成
+function getSessionId() {
+    let id = sessionStorage.getItem('sessionId');
     if (!id) {
         id = Date.now().toString(36) + Math.random().toString(36).substring(2);
-        sessionStorage.setItem('clientId', id);
+        sessionStorage.setItem('sessionId', id);
     }
     return id;
 }
-const clientId = getClientId();
+const sessionId = getSessionId();
 
 //描画関数
 function drawOnCanvas(stroke) {
@@ -79,7 +76,7 @@ let lastCheckTime = 0;
 async function pollForNewDrawings() {
     try {
         const userCountSpan = document.getElementById('user-count');
-        const response = await fetch(`/api/drawings?since=${lastCheckTime}&clientId=${clientId}`);
+        const response = await fetch(`/api/drawings?since=${lastCheckTime}&sessionId=${sessionId}`);
         const data = await response.json();
 
         //人数を画面に反映
@@ -87,14 +84,13 @@ async function pollForNewDrawings() {
             userCountSpan.textContent = data.user_count;
         }
 
-        //リセット検知：描画があったのに空になった場合
-        if (data.strokes.length === 0 && lastStrokeCount > 0) {
+        //リセット検知
+        if (data.reset_flag) {
             context.clearRect(0, 0, canvas.width, canvas.height);
+            lastCheckTime = 0; 
         }
 
-        //ストローク数を更新
-        lastStrokeCount = data.strokes.length;
-
+        // 新しい描画データがあれば描画
         if (data.strokes.length > 0) {
             data.strokes.forEach(drawOnCanvas);
             lastCheckTime = data.strokes[data.strokes.length - 1].timestamp;
@@ -107,13 +103,18 @@ async function pollForNewDrawings() {
 //初期化関数
 async function initialize() {
     try {
-        const response = await fetch(`/api/drawings?clientId=${clientId}`); //sinceなしの初回ロード
+        const response = await fetch(`/api/drawings?sessionId=${sessionId}`); //初回ロード
         const data = await response.json();
 
-        lastStrokeCount = data.strokes.length; //初期ストローク数を設定
         data.strokes.forEach(drawOnCanvas); //既存の描画をロード
 
-        lastCheckTime = Date.now();
+        // サーバーのタイムスタンプに合わせて初期化
+        if (data.strokes.length > 0) {
+            lastCheckTime = data.strokes[data.strokes.length - 1].timestamp;
+        } else {
+            lastCheckTime = 0;
+        }
+        
         setInterval(pollForNewDrawings, 1000);
     } catch (error) {
         console.error('読み込みに失敗しました:', error);
@@ -186,10 +187,10 @@ canvas.addEventListener('mouseleave', () => {
 resetButton.addEventListener('click', async () => {
     if (confirm('本当にキャンバスをリセットしますか？他の人の描画もすべて消えます。')) {
         try {
-            await fetch('/api/drawings', { method: 'DELETE' });
-            // リセット実行者も即座に画面をクリア
             context.clearRect(0, 0, canvas.width, canvas.height);
-            lastStrokeCount = 0; // ストローク数もリセット
+            lastCheckTime = 0;
+            // サーバーにリセット要求を送信（他のクライアント用）
+            await fetch('/api/drawings', { method: 'DELETE' });
         } catch (error) {
             console.error('リセットに失敗しました:', error);
         }
