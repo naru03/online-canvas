@@ -41,6 +41,7 @@ async function saveStroke(stroke) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(stroke),
+            credentials: 'same-origin'  // セッションクッキーを送信
         });
     } catch (error) {
         console.error('保存に失敗しました:', error);
@@ -54,7 +55,9 @@ let lastCheckTime = 0;
 async function pollForNewDrawings() {
     try {
         const userCountSpan = document.getElementById('user-count');
-        const response = await fetch(`/api/drawings?since=${lastCheckTime}`);
+        const response = await fetch(`/api/drawings?since=${lastCheckTime}`, {
+            credentials: 'same-origin' 
+        });
         const data = await response.json();
 
         //人数を画面に反映
@@ -81,11 +84,16 @@ async function pollForNewDrawings() {
 //初期化関数
 async function initialize() {
     try {
-        // 1. セッション作成
-        await fetch('/api/create-session', { method: 'POST' });
+        // 1. セッション作成（クッキーを含めてリクエスト）
+        await fetch('/api/create-session', { 
+            method: 'POST',
+            credentials: 'same-origin' 
+        });
         
         // 2. 初回データロード
-        const response = await fetch('/api/drawings');
+        const response = await fetch('/api/drawings', {
+            credentials: 'same-origin'
+        });
         const data = await response.json();
 
         data.strokes.forEach(drawOnCanvas); // 既存の描画をロード
@@ -174,7 +182,10 @@ resetButton.addEventListener('click', async () => {
             lastCheckTime = 0; 
             
             // サーバーにリセット要求を送信
-            await fetch('/api/drawings', { method: 'DELETE' });
+            await fetch('/api/drawings', { 
+                method: 'DELETE',
+                credentials: 'same-origin'
+            });
         } catch (error) {
             console.error('リセットに失敗しました:', error);
         }

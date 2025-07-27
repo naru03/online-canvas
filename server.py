@@ -1,34 +1,30 @@
 import json
 import os
 import time
-import secrets
-from flask import Flask, request, jsonify, send_from_directory, make_response
+from flask import Flask, request, jsonify, send_from_directory, session
+from datetime import timedelta
 
 app = Flask(__name__)
+app.secret_key = 'xxxx'  
+app.permanent_session_lifetime = timedelta(hours=1)  # セッション期限を1時間に設定
 DB_FILE = "drawings.json"
 RESET_TIMESTAMP = 0  # リセットが発生した時刻
 ACTIVE_SESSIONS = {}  # キー: sessionId, 値: 最終アクセス時刻
 SESSION_RESET_STATUS = {}  # キー: sessionId, 値: 最後に受信したリセットタイムスタンプ
 
 
-# セッション作成API
+# セッション作成API（Flaskセッション使用）
 @app.route("/api/create-session", methods=["POST"])
 def create_session():
-    session_id = secrets.token_urlsafe(32)
-    response = make_response(jsonify({"status": "success", "session_created": True}))
+    import uuid
     
-    # HTTPOnlyクッキーを設定
-    response.set_cookie(
-        'session_id',
-        session_id,
-        httponly=True,      # JavaScriptからアクセス不可
-        secure=True,        # HTTPS環境でのみ有効
-        samesite='Lax',     # CSRF対策
-        max_age=3600        # 期限1時間
-    )
+    # 新しいセッションIDを生成してFlaskセッションに保存
+    session_id = str(uuid.uuid4())
+    session['session_id'] = session_id
+    session.permanent = True 
     
     print(f"New session created: {session_id}")
-    return response
+    return jsonify({"status": "success", "session_created": True})
 
 
 # APIエンドポイントの定義
@@ -37,8 +33,8 @@ def handle_drawings():
     global RESET_TIMESTAMP, ACTIVE_SESSIONS, SESSION_RESET_STATUS
 
     if request.method == "GET":
-        # クッキーからセッションIDを取得
-        session_id = request.cookies.get("session_id")
+        # FlaskセッションからセッションIDを取得
+        session_id = session.get('session_id')
         if session_id:
             ACTIVE_SESSIONS[session_id] = time.time()
 
@@ -71,7 +67,7 @@ def handle_drawings():
                 print(f"Reset flag sent to session: {session_id}")
         else:
             # セッションIDがない場合はセッション作成が必要
-            print("No session_id found in cookies")
+            print("No session_id found in Flask session")
 
         # レスポンス
         return jsonify(
