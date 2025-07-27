@@ -16,8 +16,8 @@ let currentStroke = {
     points: []
 };
 
-//SessionId
-let currentSessionId = null;
+//ストローク数の追跡（リセット検知用）
+let lastStrokeCount = 0;
 
 //sessionStorageからClientIdを取得、なければ新規作成
 function getClientId() {
@@ -87,11 +87,13 @@ async function pollForNewDrawings() {
             userCountSpan.textContent = data.user_count;
         }
 
-        if (currentSessionId && data.session_id !== currentSessionId) {
+        //リセット検知：描画があったのに空になった場合
+        if (data.strokes.length === 0 && lastStrokeCount > 0) {
             context.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        currentSessionId = data.session_id;
+        //ストローク数を更新
+        lastStrokeCount = data.strokes.length;
 
         if (data.strokes.length > 0) {
             data.strokes.forEach(drawOnCanvas);
@@ -108,7 +110,7 @@ async function initialize() {
         const response = await fetch(`/api/drawings?clientId=${clientId}`); //sinceなしの初回ロード
         const data = await response.json();
 
-        currentSessionId = data.session_id; //最初のセッションIDを設定
+        lastStrokeCount = data.strokes.length; //初期ストローク数を設定
         data.strokes.forEach(drawOnCanvas); //既存の描画をロード
 
         lastCheckTime = Date.now();
@@ -185,6 +187,9 @@ resetButton.addEventListener('click', async () => {
     if (confirm('本当にキャンバスをリセットしますか？他の人の描画もすべて消えます。')) {
         try {
             await fetch('/api/drawings', { method: 'DELETE' });
+            // リセット実行者も即座に画面をクリア
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            lastStrokeCount = 0; // ストローク数もリセット
         } catch (error) {
             console.error('リセットに失敗しました:', error);
         }

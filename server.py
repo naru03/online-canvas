@@ -1,19 +1,17 @@
 import json
 import os
 import time
-import uuid
 from flask import Flask, request, jsonify, send_from_directory
 
 app = Flask(__name__)
 DB_FILE = "drawings.json"
-SESSION_ID = str(uuid.uuid4())
 ACTIVE_USERS = {}  # キー: clientId, 値: 最終アクセス時刻
 
 
 # APIエンドポイントの定義
 @app.route("/api/drawings", methods=["GET", "POST", "DELETE"])
 def handle_drawings():
-    global SESSION_ID, ACTIVE_USERS
+    global ACTIVE_USERS
 
     if request.method == "GET":
         # アクティブユーザーの記録と集計
@@ -40,7 +38,7 @@ def handle_drawings():
 
         # レスポンス
         return jsonify(
-            {"session_id": SESSION_ID, "strokes": response_data, "user_count": user_count}
+            {"strokes": response_data, "user_count": user_count}
         )
 
     elif request.method == "POST":
@@ -62,11 +60,8 @@ def handle_drawings():
 
     elif request.method == "DELETE":
         # 全ての描画データをリセット
-        # ファイルを空のリストで上書きしてリセット
         with open(DB_FILE, "w") as f:
             json.dump([], f)
-        # 新しいセッションIDを生成して、リセットを識別
-        SESSION_ID = str(uuid.uuid4())
         return jsonify({"status": "success", "message": "Canvas has been reset."})
 
 
@@ -83,4 +78,4 @@ def send_file(path):
 
 # サーバーの起動
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True, port=5001)
+    app.run(host="0.0.0.0", debug=False, port=5001)
