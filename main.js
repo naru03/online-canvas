@@ -58,17 +58,6 @@ async function saveStroke(stroke) {
     }
 }
 
-//既存の描画データを読み込んで表示する関数
-async function loadAndDraw() {
-    try {
-        const response = await fetch('/api/drawings');
-        const strokes = await response.json();
-        strokes.forEach(drawOnCanvas);
-    } catch (error) {
-        console.error('読み込みに失敗しました:', error);
-    }
-}
-
 //最後にチェックしたサーバー時刻
 let lastCheckTime = 0;
 
@@ -187,9 +176,11 @@ canvas.addEventListener('mouseleave', () => {
 resetButton.addEventListener('click', async () => {
     if (confirm('本当にキャンバスをリセットしますか？他の人の描画もすべて消えます。')) {
         try {
+            // 自分のキャンバスを即座にクリア
             context.clearRect(0, 0, canvas.width, canvas.height);
-            lastCheckTime = 0;
-            // サーバーにリセット要求を送信（他のクライアント用）
+            lastCheckTime = 0; // タイムスタンプもリセット
+            
+            // サーバーにリセット要求を送信（他のセッションにも通知される）
             await fetch('/api/drawings', { method: 'DELETE' });
         } catch (error) {
             console.error('リセットに失敗しました:', error);

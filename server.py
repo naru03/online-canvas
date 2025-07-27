@@ -55,7 +55,7 @@ def handle_drawings():
         )
 
     elif request.method == "POST":
-        # 描画データの追加
+        # 新しい描画データの追加
         all_data = []
         if os.path.exists(DB_FILE) and os.path.getsize(DB_FILE) > 0:
             with open(DB_FILE, "r") as f:
@@ -78,7 +78,6 @@ def handle_drawings():
         return jsonify({"status": "success", "message": "Canvas has been reset."})
 
 
-# フロントエンドのファイルを提供するルーティング
 @app.route("/")
 def index():
     return send_from_directory(".", "index.html")
