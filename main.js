@@ -16,17 +16,6 @@ let currentStroke = {
     points: []
 };
 
-//sessionStorageからSessionIdを取得、なければ新規作成
-function getSessionId() {
-    let id = sessionStorage.getItem('sessionId');
-    if (!id) {
-        id = Date.now().toString(36) + Math.random().toString(36).substring(2);
-        sessionStorage.setItem('sessionId', id);
-    }
-    return id;
-}
-const sessionId = getSessionId();
-
 //描画関数
 function drawOnCanvas(stroke) {
     if (!stroke || stroke.points.length < 2) {
@@ -65,7 +54,7 @@ let lastCheckTime = 0;
 async function pollForNewDrawings() {
     try {
         const userCountSpan = document.getElementById('user-count');
-        const response = await fetch(`/api/drawings?since=${lastCheckTime}&sessionId=${sessionId}`);
+        const response = await fetch(`/api/drawings?since=${lastCheckTime}`);
         const data = await response.json();
 
         //人数を画面に反映
@@ -92,10 +81,14 @@ async function pollForNewDrawings() {
 //初期化関数
 async function initialize() {
     try {
-        const response = await fetch(`/api/drawings?sessionId=${sessionId}`); //初回ロード
+        // 1. セッション作成
+        await fetch('/api/create-session', { method: 'POST' });
+        
+        // 2. 初回データロード
+        const response = await fetch('/api/drawings');
         const data = await response.json();
 
-        data.strokes.forEach(drawOnCanvas); //既存の描画をロード
+        data.strokes.forEach(drawOnCanvas); // 既存の描画をロード
 
         // サーバーのタイムスタンプに合わせて初期化
         if (data.strokes.length > 0) {
@@ -176,11 +169,11 @@ canvas.addEventListener('mouseleave', () => {
 resetButton.addEventListener('click', async () => {
     if (confirm('本当にキャンバスをリセットしますか？他の人の描画もすべて消えます。')) {
         try {
-            // 自分のキャンバスを即座にクリア
+            // 自分のキャンバスをクリア
             context.clearRect(0, 0, canvas.width, canvas.height);
-            lastCheckTime = 0; // タイムスタンプもリセット
+            lastCheckTime = 0; 
             
-            // サーバーにリセット要求を送信（他のセッションにも通知される）
+            // サーバーにリセット要求を送信
             await fetch('/api/drawings', { method: 'DELETE' });
         } catch (error) {
             console.error('リセットに失敗しました:', error);

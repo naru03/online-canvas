@@ -1,7 +1,8 @@
 import json
 import os
 import time
-from flask import Flask, request, jsonify, send_from_directory
+import secrets
+from flask import Flask, request, jsonify, send_from_directory, make_response
 
 app = Flask(__name__)
 DB_FILE = "drawings.json"
@@ -10,14 +11,34 @@ ACTIVE_SESSIONS = {}  # キー: sessionId, 値: 最終アクセス時刻
 SESSION_RESET_STATUS = {}  # キー: sessionId, 値: 最後に受信したリセットタイムスタンプ
 
 
+# セッション作成API
+@app.route("/api/create-session", methods=["POST"])
+def create_session():
+    session_id = secrets.token_urlsafe(32)
+    response = make_response(jsonify({"status": "success", "session_created": True}))
+    
+    # HTTPOnlyクッキーを設定
+    response.set_cookie(
+        'session_id',
+        session_id,
+        httponly=True,      # JavaScriptからアクセス不可
+        secure=True,        # HTTPS環境でのみ有効
+        samesite='Lax',     # CSRF対策
+        max_age=3600        # 期限1時間
+    )
+    
+    print(f"New session created: {session_id}")
+    return response
+
+
 # APIエンドポイントの定義
 @app.route("/api/drawings", methods=["GET", "POST", "DELETE"])
 def handle_drawings():
     global RESET_TIMESTAMP, ACTIVE_SESSIONS, SESSION_RESET_STATUS
 
     if request.method == "GET":
-        # アクティブセッションの記録と集計
-        session_id = request.args.get("sessionId")
+        # クッキーからセッションIDを取得
+        session_id = request.cookies.get("session_id")
         if session_id:
             ACTIVE_SESSIONS[session_id] = time.time()
 
@@ -48,6 +69,9 @@ def handle_drawings():
                 reset_flag = True
                 SESSION_RESET_STATUS[session_id] = RESET_TIMESTAMP
                 print(f"Reset flag sent to session: {session_id}")
+        else:
+            # セッションIDがない場合はセッション作成が必要
+            print("No session_id found in cookies")
 
         # レスポンス
         return jsonify(
