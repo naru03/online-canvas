@@ -1,24 +1,22 @@
 import json
 import os
 import time
+import uuid
 from flask import Flask, request, jsonify, send_from_directory, session
 from datetime import timedelta
 
 app = Flask(__name__)
 app.secret_key = 'xxxx'  
-app.permanent_session_lifetime = timedelta(hours=1)  # セッション期限を1時間に設定
+app.permanent_session_lifetime = timedelta(hours=1)
 DB_FILE = "drawings.json"
 RESET_TIMESTAMP = 0  # リセットが発生した時刻
 ACTIVE_SESSIONS = {}  # キー: sessionId, 値: 最終アクセス時刻
 SESSION_RESET_STATUS = {}  # キー: sessionId, 値: 最後に受信したリセットタイムスタンプ
 
 
-# セッション作成API（Flaskセッション使用）
+# セッション作成API
 @app.route("/api/create-session", methods=["POST"])
 def create_session():
-    import uuid
-    
-    # 新しいセッションIDを生成してFlaskセッションに保存
     session_id = str(uuid.uuid4())
     session['session_id'] = session_id
     session.permanent = True 
