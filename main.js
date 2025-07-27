@@ -2,7 +2,6 @@
 const canvas = document.getElementById('whiteboard');
 const context = canvas.getContext('2d');
 
-
 //線の基本設定
 context.lineJoin = 'round';
 context.lineCap = 'round';
@@ -81,11 +80,8 @@ const widthButtons = document.querySelectorAll('.width-btn');
 //カラーボタンの処理
 colorButtons.forEach(button => {
     button.addEventListener('click', () => {
-        //他のボタンの .selected を削除
         colorButtons.forEach(btn => btn.classList.remove('selected'));
-        //クリックされたボタンに .selected を追加
         button.classList.add('selected');
-        //ペンの色を更新
         currentStroke.color = button.dataset.color;
     });
 });
@@ -93,11 +89,8 @@ colorButtons.forEach(button => {
 //太さボタンの処理
 widthButtons.forEach(button => {
     button.addEventListener('click', () => {
-        //他のボタンの .selected を削除
         widthButtons.forEach(btn => btn.classList.remove('selected'));
-        //クリックされたボタンに .selected を追加
         button.classList.add('selected');
-        //ペンの太さを更新 (文字列なので数値に変換)
         currentStroke.lineWidth = parseInt(button.dataset.width, 10);
     });
 });
@@ -150,10 +143,8 @@ const resetButton = document.getElementById('reset-button');
 resetButton.addEventListener('click', async () => {
     if (confirm('本当にキャンバスをリセットしますか？他の人の描画もすべて消えます。')) {
         try {
-            //サーバーにリセットを要求するだけ
+            //サーバーにリセットを要求
             await fetch('/api/reset', { method: 'POST' });
-            //location.reload() は削除。
-            //画面のクリアは、次のポーリングで検知して行われる。
         } catch (error) {
             console.error('リセットに失敗しました:', error);
         }
@@ -161,14 +152,13 @@ resetButton.addEventListener('click', async () => {
 });
 
 //リアルタイム更新
-//最後にチェックしたサーバー時刻を保持する変数
+//最後にチェックしたサーバー時刻
 let lastCheckTime = 0;
 
 //サーバーに新しい描画データがないか問い合わせる関数
 async function pollForNewDrawings() {
     try {
-        const userCountSpan = document.getElementById('user-count'); //人数表示の要素を取得
-
+        const userCountSpan = document.getElementById('user-count'); 
         const response = await fetch(`/api/drawings?since=${lastCheckTime}&clientId=${clientId}`);
         const data = await response.json();
 

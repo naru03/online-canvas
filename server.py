@@ -20,7 +20,7 @@ def get_drawings():
     if client_id:
         ACTIVE_USERS[client_id] = time.time()
 
-    # タイムアウト（10秒以上応答がないユーザーは除外）
+    # タイムアウト
     timeout_threshold = time.time() - 10
     ACTIVE_USERS = {uid: t for uid, t in ACTIVE_USERS.items() if t > timeout_threshold}
     user_count = len(ACTIVE_USERS)
