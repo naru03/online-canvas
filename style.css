@@ -14,7 +14,7 @@ h1 {
 #whiteboard-container {
     border: 1px solid #ccc;
     margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /*box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);*/
 }
 
 #whiteboard {
@@ -42,12 +42,11 @@ h1 {
 .controls {
     display: flex;
     gap: 30px;
-    /*ツールグループ間の隙間*/
     align-items: center;
     padding: 10px;
-    background-color: #fff;
+    /*background-color: #fff;*/
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /*box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);*/
     margin-bottom: 20px;
 }
 
@@ -57,7 +56,6 @@ h1 {
     align-items: center;
 }
 
-/*カラーボタン*/
 .color-btn {
     width: 30px;
     height: 30px;
@@ -74,8 +72,7 @@ h1 {
 
 .color-btn.selected {
     border-color: #007bff;
-    /*選択されている色を青い枠で囲む*/
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    /*box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);*/
 }
 
 .color-btn.eraser {
@@ -84,7 +81,6 @@ h1 {
     color: #333;
 }
 
-/*太さボタン*/
 .width-btn {
     padding: 5px 15px;
     border: 2px solid transparent;
@@ -92,6 +88,5 @@ h1 {
 
 .width-btn.selected {
     border-color: #007bff;
-    /*選択されている太さを青い枠で囲む*/
     background-color: #e7f3ff;
 }
