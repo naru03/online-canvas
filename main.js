@@ -1,24 +1,25 @@
-//基本設定
+//キャンバス取得
 const canvas = document.getElementById('whiteboard');
 const context = canvas.getContext('2d');
 
-//線の基本設定
+//線の設定
 context.lineJoin = 'round';
 context.lineCap = 'round';
 
 //描画中フラグ
 let isDrawing = false;
 
-//ストロークの情報を保持する配列
+//ストローク記録
 let currentStroke = {
     color: 'black',
     lineWidth: 3,
     points: []
 };
-//セッションID
+
+//SessionId
 let currentSessionId = null;
 
-//セッションストレージからクライアントIDを取得、なければ新規作成
+//sessionStorageからClientIdを取得、なければ新規作成
 function getClientId() {
     let id = sessionStorage.getItem('clientId');
     if (!id) {
@@ -29,7 +30,7 @@ function getClientId() {
 }
 const clientId = getClientId();
 
-//描画ロジック
+//描画関数
 function drawOnCanvas(stroke) {
     if (!stroke || stroke.points.length < 2) {
         return;
@@ -45,10 +46,10 @@ function drawOnCanvas(stroke) {
     context.stroke();
 }
 
-//サーバーとの通信
+//ストロークを保存する関数
 async function saveStroke(stroke) {
     try {
-        await fetch('/api/draw', {
+        await fetch('/api/drawings', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -60,105 +61,24 @@ async function saveStroke(stroke) {
     }
 }
 
-//ページ読み込み時に、サーバーから既存の描画データを読み込んで表示する
+//既存の描画データを読み込んで表示する関数
 async function loadAndDraw() {
     try {
         const response = await fetch('/api/drawings');
         const strokes = await response.json();
-        //取得した全てのストロークを描画
         strokes.forEach(drawOnCanvas);
     } catch (error) {
         console.error('読み込みに失敗しました:', error);
     }
 }
 
-//イベントリスナー
-//ツール選択の処理
-const colorButtons = document.querySelectorAll('.color-btn');
-const widthButtons = document.querySelectorAll('.width-btn');
-
-//カラーボタンの処理
-colorButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        colorButtons.forEach(btn => btn.classList.remove('selected'));
-        button.classList.add('selected');
-        currentStroke.color = button.dataset.color;
-    });
-});
-
-//太さボタンの処理
-widthButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        widthButtons.forEach(btn => btn.classList.remove('selected'));
-        button.classList.add('selected');
-        currentStroke.lineWidth = parseInt(button.dataset.width, 10);
-    });
-});
-
-//マウスのボタンが押された時
-canvas.addEventListener('mousedown', (e) => {
-    isDrawing = true;
-    //新しいストロークを開始
-    currentStroke.points = [{ x: e.offsetX, y: e.offsetY }];
-});
-
-//マウスが動いた時
-canvas.addEventListener('mousemove', (e) => {
-    if (!isDrawing) return;
-
-    //現在の点をストロークに追加
-    const point = { x: e.offsetX, y: e.offsetY };
-    currentStroke.points.push(point);
-
-    //画面に描画する
-    drawOnCanvas(currentStroke);
-});
-
-//マウスのボタンが離された時
-canvas.addEventListener('mouseup', () => {
-    if (!isDrawing) return;
-    isDrawing = false;
-
-    //点が2つ以上あればサーバーに保存
-    if (currentStroke.points.length > 1) {
-        saveStroke(currentStroke);
-    }
-    //ストローク情報をリセット
-    currentStroke.points = [];
-});
-
-//マウスカーソルがキャンバスの外に出た時
-canvas.addEventListener('mouseleave', () => {
-    if (!isDrawing) return;
-    isDrawing = false;
-
-    if (currentStroke.points.length > 1) {
-        saveStroke(currentStroke);
-    }
-    currentStroke.points = [];
-});
-
-//リセットボタンが押された時
-const resetButton = document.getElementById('reset-button');
-resetButton.addEventListener('click', async () => {
-    if (confirm('本当にキャンバスをリセットしますか？他の人の描画もすべて消えます。')) {
-        try {
-            //サーバーにリセットを要求
-            await fetch('/api/reset', { method: 'POST' });
-        } catch (error) {
-            console.error('リセットに失敗しました:', error);
-        }
-    }
-});
-
-//リアルタイム更新
 //最後にチェックしたサーバー時刻
 let lastCheckTime = 0;
 
-//サーバーに新しい描画データがないか問い合わせる関数
+//ポーリング
 async function pollForNewDrawings() {
     try {
-        const userCountSpan = document.getElementById('user-count'); 
+        const userCountSpan = document.getElementById('user-count');
         const response = await fetch(`/api/drawings?since=${lastCheckTime}&clientId=${clientId}`);
         const data = await response.json();
 
@@ -168,7 +88,6 @@ async function pollForNewDrawings() {
         }
 
         if (currentSessionId && data.session_id !== currentSessionId) {
-            console.log("リセットを検知しました。キャンバスをクリアします。");
             context.clearRect(0, 0, canvas.width, canvas.height);
         }
 
@@ -183,13 +102,14 @@ async function pollForNewDrawings() {
     }
 }
 
+//初期化関数
 async function initialize() {
     try {
         const response = await fetch(`/api/drawings?clientId=${clientId}`); //sinceなしの初回ロード
         const data = await response.json();
 
         currentSessionId = data.session_id; //最初のセッションIDを設定
-        data.strokes.forEach(drawOnCanvas); //既存の絵をロード
+        data.strokes.forEach(drawOnCanvas); //既存の描画をロード
 
         lastCheckTime = Date.now();
         setInterval(pollForNewDrawings, 1000);
@@ -198,5 +118,75 @@ async function initialize() {
     }
 }
 
-//初期化
-initialize(); 
+initialize();
+
+
+//イベントリスナー
+
+//ボタン取得
+const colorButtons = document.querySelectorAll('.color-btn');
+const widthButtons = document.querySelectorAll('.width-btn');
+const resetButton = document.getElementById('reset-button');
+
+//カラーボタン
+colorButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        colorButtons.forEach(btn => btn.classList.remove('selected'));
+        button.classList.add('selected');
+        currentStroke.color = button.dataset.color;
+    });
+});
+
+//太さボタン
+widthButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        widthButtons.forEach(btn => btn.classList.remove('selected'));
+        button.classList.add('selected');
+        currentStroke.lineWidth = parseInt(button.dataset.width, 10);
+    });
+});
+
+//マウスのボタンが押された時
+canvas.addEventListener('mousedown', (e) => {
+    isDrawing = true;
+    currentStroke.points = [{ x: e.offsetX, y: e.offsetY }];
+});
+
+//マウスが動いた時
+canvas.addEventListener('mousemove', (e) => {
+    if (!isDrawing) return;
+    const point = { x: e.offsetX, y: e.offsetY };
+    currentStroke.points.push(point);
+    drawOnCanvas(currentStroke);
+});
+
+//マウスのボタンが離された時
+canvas.addEventListener('mouseup', () => {
+    if (!isDrawing) return;
+    isDrawing = false;
+    if (currentStroke.points.length > 1) {
+        saveStroke(currentStroke);
+    }
+    currentStroke.points = [];
+});
+
+//マウスカーソルがキャンバスの外に出た時
+canvas.addEventListener('mouseleave', () => {
+    if (!isDrawing) return;
+    isDrawing = false;
+    if (currentStroke.points.length > 1) {
+        saveStroke(currentStroke);
+    }
+    currentStroke.points = [];
+});
+
+//リセットボタンが押された時
+resetButton.addEventListener('click', async () => {
+    if (confirm('本当にキャンバスをリセットしますか？他の人の描画もすべて消えます。')) {
+        try {
+            await fetch('/api/drawings', { method: 'DELETE' });
+        } catch (error) {
+            console.error('リセットに失敗しました:', error);
+        }
+    }
+});
