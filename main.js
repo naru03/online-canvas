@@ -32,7 +32,7 @@ function drawOnCanvas(stroke) {
     context.stroke();
 }
 
-//ストロークを保存する関数
+//描画を保存する関数
 async function saveStroke(stroke) {
     try {
         await fetch('/api/drawings', {
@@ -41,7 +41,7 @@ async function saveStroke(stroke) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(stroke),
-            credentials: 'same-origin'  // セッションクッキーを送信
+            credentials: 'same-origin'
         });
     } catch (error) {
         console.error('保存に失敗しました:', error);
@@ -84,13 +84,13 @@ async function pollForNewDrawings() {
 //初期化関数
 async function initialize() {
     try {
-        // 1. セッション作成（クッキーを含めてリクエスト）
+        // セッション作成
         await fetch('/api/create-session', { 
             method: 'POST',
             credentials: 'same-origin' 
         });
         
-        // 2. 初回データロード
+        // 初回データロード
         const response = await fetch('/api/drawings', {
             credentials: 'same-origin'
         });
