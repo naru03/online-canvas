@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify, send_from_directory, session
 from datetime import timedelta
 
 app = Flask(__name__)
-app.secret_key = 'xxxx'  
+app.secret_key = os.environ.get('FLASK_SECRET_KEY')  
 app.permanent_session_lifetime = timedelta(hours=1)
 DB_FILE = "drawings.json"
 RESET_TIMESTAMP = 0  # リセットが発生した時刻
@@ -103,7 +103,12 @@ def index():
 
 @app.route("/<path:path>")
 def send_file(path):
-    return send_from_directory(".", path)
+    # セキュリティ: 特定の拡張子のみ許可
+    allowed_extensions = {'.css', '.js', '.ico', '.png', '.jpg', '.jpeg', '.gif'}
+    if any(path.endswith(ext) for ext in allowed_extensions):
+        return send_from_directory(".", path)
+    else:
+        return "File not found", 404
 
 
 # サーバーの起動
